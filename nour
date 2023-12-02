@@ -119,10 +119,10 @@ def resample_particles(particles):
     - Resampled particles array.
     """
 
-    # Re-normalize weights to create a probability distribution
+    # Re-normalize the widths so that the total sum width = M:
     normalized_weights = weights / np.sum(weights)
 
-    # Resampling using numpy's random.choice
+    # Randomly draw r from [0, 1] (uniform dist.) + Loop through particles from [1] upwards while the sum of weights thus far is less than r:
     indices = np.random.choice(np.arange(num_particles), size=num_particles, p=normalized_weights)
 
     # Create a new set of particles based on the selected indices

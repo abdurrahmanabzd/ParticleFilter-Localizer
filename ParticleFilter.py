@@ -84,14 +84,15 @@ def sensor_model(particles, lidar_data, map):
     for particle in particles:
         x_robot, y_robot, theta_robot, weight = particle
 
-        laser_angles = np.deg2rad(np.arange(theta_robot - 89.5, theta_robot + 90, 1))
-        ranges = np.array(lidar_data[3:183]) 
+        # Extracting relevant data from the lidar scan
+        x_laser = x_robot + 25 * np.cos(theta_robot)  # x_laser in global coordinates
+        y_laser = y_robot + 25 * np.sin(theta_robot)  # y_laser in global coordinates
 
-        x_laser = x_robot + 25 * np.cos(np.deg2rad(theta_robot))  #x_laser in global coordinates
-        y_laser = y_robot + 25 * np.sin(np.deg2rad(theta_robot))  #y_laser in global coordinates
+        laser_angles = np.deg2rad(np.linspace(theta_robot - 89.5, theta_robot + 89.5, 180)) 
+        ranges = np.array(lidar_data[0:180])  # Laser range measurements
 
-        x_endpoints = x_laser + ranges * np.cos(laser_angles)  #x-coordinates of endpoints
-        y_endpoints = y_laser + ranges * np.sin(laser_angles)  #y-coordinates of endpoints
+        x_endpoints = x_laser + ranges * np.cos(laser_angles) 
+        y_endpoints = y_laser + ranges * np.sin(laser_angles) 
 
         updated_weight = 1.0  #Default weight
 
@@ -162,7 +163,7 @@ draw_map(grid_map)
 #region Main Loop
 
 # Read the odometry data from the file
-with open('abdurrahmanabzd/ParticleFilter-Localizer/Robotdata2023.log', 'r') as file:
+with open('Robotdata2023.log', 'r') as file:
     # Particle filter main loop
     particles = initial_particles.copy()
 
@@ -191,11 +192,15 @@ with open('abdurrahmanabzd/ParticleFilter-Localizer/Robotdata2023.log', 'r') as 
             #Motion model:
             particles = motion_model(particles, delta_rot1, delta_trans, delta_rot2)
             #Sensor model:
-            sensor_data = map(float, elements[4:186])
-            sensor_model(particles,sensor_data,grid_map)
+            sensor_data = [float(element) for element in elements[7:187]]
+            particles = sensor_model(particles,sensor_data,grid_map)
+            #Resampling
+            particles = resample(particles)
+    
+    # Plot the final particle positions
+    plt.scatter(particles[:, 1], particles[:, 0], s=1, c='b', marker='.')
+    plt.show()
 
 #endregion
 
-# Plot the final particle positions
-plt.scatter(particles[:, 1], particles[:, 0], s=1, c='b', marker='.')
-plt.show()
+

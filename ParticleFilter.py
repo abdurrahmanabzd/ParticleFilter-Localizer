@@ -1,6 +1,20 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+# Particle filter parameters
+num_particles = 1000
+initial_particles = np.random.rand(num_particles, 4)  # Each particle is [x, y, theta, weight]
+
+# Initialize particles within a specific region
+initial_particles[:, 0] = np.random.uniform(72, 85, num_particles)  # x position
+initial_particles[:, 1] = np.random.uniform(445, 465, num_particles)  # y position
+initial_particles[:, 2] = np.random.uniform(-np.pi, np.pi, num_particles)  # theta
+initial_particles[:, 3] = 1 #initial weight = 1
+
+
+#region Functions
+
+#Creating a map array out of map data file. 
 def process_map(file_path):
     # Import Map file and save it in an array
     with open(file_path, 'r') as file:
@@ -10,16 +24,16 @@ def process_map(file_path):
     mapArray = np.array([[int(grid) for grid in row.split()] for row in rows])
 
     return mapArray
-    
 
+#Drawing a map of the environment (inverted, occupied grids will be shown in black)
 def draw_map(mapArray):
     mapInverted = 1 - mapArray
 
     plt.imshow(mapInverted, cmap='gray')
     plt.show()
 
-
-def motion_update_odometry(particles, delta_rot1, delta_trans, delta_rot2):
+# Particle filter odometry motion update function
+def motion_model(particles, delta_rot1, delta_trans, delta_rot2):
     """
     Update particle positions based on odometry motion model.
 
@@ -37,6 +51,7 @@ def motion_update_odometry(particles, delta_rot1, delta_trans, delta_rot2):
     particles[:, 2] += delta_rot1 + delta_rot2
 
     return particles
+
 
 
 def sensor_model(particles, lidar_data, map):
@@ -112,70 +127,50 @@ def sensor_model(particles, lidar_data, map):
     return particles
 
 
-#Processing map data
+#endregion
+
+#Drawing the map of the environment
 map_file = 'map2023.dat'
 grid_map = process_map(map_file) #Grid-Map array
 draw_map(grid_map)
 
-# Load robot data
-robot_data = np.loadtxt('Robotdata2023.log')
+#region Main Loop
 
-# Particle filter parameters
-num_particles = 1000
-initial_particles = np.random.rand(num_particles, 4)  # Each particle is [x, y, theta, weight]
+# Read the odometry data from the file
+with open('abdurrahmanabzd/ParticleFilter-Localizer/Robotdata2023.log', 'r') as file:
+    # Particle filter main loop
+    particles = initial_particles.copy()
 
-# Initialize particles within a specific region
-initial_particles[:, 0] = np.random.uniform(72, 85, num_particles)  # x position
-initial_particles[:, 1] = np.random.uniform(445, 465, num_particles)  # y position
-initial_particles[:, 2] = np.random.uniform(-0.1745, 0.1745, num_particles)  # theta
-initial_particles[:, 3] = 1 #initial weight = 1
+    # Read the file line by line
+    for line in file:
+        # Split the line into individual elements
+        elements = line.split()
 
-# Particle filter main loop
-particles = initial_particles.copy()
+        # Extract relevant odometry data and timestamp
+        x_robot, y_robot, theta_robot,  = map(float, elements[1:4])
+        timestamp = elements.pop()
 
-for t in range(1, len(robot_data)):
-    # Motion update based on odometry data
-    if robot_data[t, 0] == 'O':
-        delta_rot1 = robot_data[t, 3]
-        delta_trans = robot_data[t, 4]
-        delta_rot2 = robot_data[t, 5]
+        # Calculate delta_rot1, delta_trans, and delta_rot2
+        # Assuming delta_trans is the Euclidean distance from the previous position
+        delta_trans = np.sqrt((x_robot - particles[0, 0])**2 + (y_robot - particles[0, 1])**2)
+        delta_rot1 = np.arctan2(y_robot - particles[0, 1], x_robot - particles[0, 0]) - particles[0, 2]
+        delta_rot2 = theta_robot - particles[0, 2]
+
+        # Check if the line starts with 'O' (indicating odometry data)
+        if line.startswith('O'):
+            # Update particle positions based on odometry data
+            particles = motion_model(particles, delta_rot1, delta_trans, delta_rot2)
         
-        particles = motion_update_odometry(particles, delta_rot1, delta_trans, delta_rot2)
-    
-    if robot_data[t, 0] == 'L':
-    #Motion model:
-        delta_rot1 = robot_data[t, 3]
-        delta_trans = robot_data[t, 4]
-        delta_rot2 = robot_data[t, 5]
-        particles = motion_update_odometry(particles, delta_rot1, delta_trans, delta_rot2)
-    #Sensor model:
-        sensor_data = robot_data[4:186]
-        sensor_model(particles,sensor_data,grid_map)
+        # Check if the line starts with 'L' (indicating laser data)
+        if line.startswith('L'):
+            #Motion model:
+            particles = motion_model(particles, delta_rot1, delta_trans, delta_rot2)
+            #Sensor model:
+            sensor_data = map(float, elements[4:186])
+            sensor_model(particles,sensor_data,grid_map)
 
+#endregion
 
 # Plot the final particle positions
 plt.scatter(particles[:, 1], particles[:, 0], s=1, c='b', marker='.')
 plt.show()
-
-
-
-# Initialize Particles
-# - Particle Number
-# - Initial Particles Position
-
-# Import Robot Log
-# if "L": 
-# 1- Motion Model (odometry data)***
-
-# 2- Sensor Model (laser data)***
-
-# 3- Resampling (Low  Variance Algorithm) ***
-
-# if "O":
-# 1- Motion Model
-  
-
-# Plotting
-
-# Video Creation
-

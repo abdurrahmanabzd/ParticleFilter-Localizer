@@ -11,13 +11,11 @@ def process_map(file_path):
 
     return mapArray
     
-
 def draw_map(mapArray):
     mapInverted = 1 - mapArray
 
     plt.imshow(mapInverted, cmap='gray')
     plt.show()
-
 
 def motion_update_odometry(particles, delta_rot1, delta_trans, delta_rot2):
     """
@@ -37,7 +35,6 @@ def motion_update_odometry(particles, delta_rot1, delta_trans, delta_rot2):
     particles[:, 2] += delta_rot1 + delta_rot2
 
     return particles
-
 
 def sensor_model(particles, lidar_data, map):
     """
@@ -111,6 +108,30 @@ def sensor_model(particles, lidar_data, map):
 
     return particles
 
+def resample_particles(particles):
+    """
+    Resample particles based on their weights.
+
+    Parameters:
+    - particles: numpy array of shape (num_particles, 4) representing particles [x, y, theta, weight]
+
+    Returns:
+    - Resampled particles array.
+    """
+
+    # Re-normalize weights to create a probability distribution
+    normalized_weights = weights / np.sum(weights)
+
+    # Resampling using numpy's random.choice
+    indices = np.random.choice(np.arange(num_particles), size=num_particles, p=normalized_weights)
+
+    # Create a new set of particles based on the selected indices
+    resampled_particles = particles[indices].copy()
+
+    # Reset weights to uniform distribution after resampling
+    resampled_particles[:, 3] = 1.0 / num_particles
+
+    return resampled_particles
 
 #Processing map data
 map_file = 'map2023.dat'
@@ -148,15 +169,17 @@ for t in range(1, len(robot_data)):
         delta_trans = robot_data[t, 4]
         delta_rot2 = robot_data[t, 5]
         particles = motion_update_odometry(particles, delta_rot1, delta_trans, delta_rot2)
+    
     #Sensor model:
         sensor_data = robot_data[4:186]
         sensor_model(particles,sensor_data,grid_map)
 
+    # Resampling 
+        particles = resample_particles(particles)
 
-# Plot the final particle positions
-plt.scatter(particles[:, 1], particles[:, 0], s=1, c='b', marker='.')
-plt.show()
-
+    # Plot the final particle positions
+    plt.scatter(particles[:, 1], particles[:, 0], s=1, c='b', marker='.')
+    plt.show()
 
 
 # Initialize Particles

@@ -26,10 +26,12 @@ def process_map(file_path):
     return mapArray
 
 #Drawing a map of the environment (inverted, occupied grids will be shown in black)
-def draw_map(mapArray):
+def show_particles(mapArray,particles):
     mapInverted = 1 - mapArray
-
-    plt.imshow(mapInverted, cmap='gray')
+    # Plot the final particle positions on the map
+    plt.imshow(mapInverted, cmap='gray')  # Display the map
+    # Scatter plot for particles
+    plt.scatter(particles[:, 1], particles[:, 0], s=1, c='b', marker='.')
     plt.show()
 
 # Particle filter odometry motion update function
@@ -158,7 +160,6 @@ def resample(particles):
 #Drawing the map of the environment
 map_file = 'map2023.dat'
 grid_map = process_map(map_file) #Grid-Map array
-draw_map(grid_map)
 
 #region Main Loop
 
@@ -197,9 +198,7 @@ with open('Robotdata2023.log', 'r') as file:
             #Resampling
             particles = resample(particles)
     
-    # Plot the final particle positions
-    plt.scatter(particles[:, 1], particles[:, 0], s=1, c='b', marker='.')
-    plt.show()
+    show_particles(grid_map,particles)
 
 #endregion
 

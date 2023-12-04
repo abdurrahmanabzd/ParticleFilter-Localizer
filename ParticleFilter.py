@@ -54,8 +54,6 @@ def motion_model(particles, delta_rot1, delta_trans, delta_rot2):
 
     return particles
 
-
-
 def sensor_model(particles, lidar_data, map):
     """
     Update particles' weight based on lidar scan data.
@@ -154,15 +152,11 @@ def resample(particles):
 
     return resampled_particles
 
-
-#endregion
-
 #Drawing the map of the environment
 map_file = 'map2023.dat'
 grid_map = process_map(map_file) #Grid-Map array
 
 #region Main Loop
-
 # Read the odometry data from the file
 with open('Robotdata2023.log', 'r') as file:
     # Particle filter main loop

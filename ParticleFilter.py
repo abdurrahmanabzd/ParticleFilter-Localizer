@@ -31,7 +31,7 @@ def show_particles(mapArray,particles):
     # Plot the final particle positions on the map
     plt.imshow(mapInverted, cmap='gray')  # Display the map
     # Scatter plot for particles
-    plt.scatter(particles[:, 1], particles[:, 0], s=1, c='b', marker='.')
+    plt.scatter(particles[:, 0], particles[:, 1], s=1, c='b', marker='.')
     plt.show()
 
 # Particle filter odometry motion update function

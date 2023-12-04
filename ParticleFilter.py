@@ -167,14 +167,13 @@ with open('Robotdata2023.log', 'r') as file:
         elements = line.split()
 
         # Extract relevant odometry data and timestamp
-        x_robot, y_robot, theta_robot,  = map(float, elements[1:4])
+        x_robot, y_robot, theta_robot = map(float, elements[1:4])
         timestamp = elements.pop()
 
         # Calculate delta_rot1, delta_trans, and delta_rot2
-        # Assuming delta_trans is the Euclidean distance from the previous position
-        delta_trans = np.sqrt((x_robot - particles[0, 0])**2 + (y_robot - particles[0, 1])**2)
-        delta_rot1 = np.arctan2(y_robot - particles[0, 1], x_robot - particles[0, 0]) - particles[0, 2]
-        delta_rot2 = theta_robot - particles[0, 2]
+        delta_trans = np.sqrt((x_robot - particles[:, 0])**2 + (y_robot - particles[:, 1])**2)
+        delta_rot1 = np.arctan2(y_robot - particles[:, 1], x_robot - particles[:, 0]) - particles[:, 2]
+        delta_rot2 = theta_robot - particles[:, 2]
 
         # Check if the line starts with 'O' (indicating odometry data)
         if line.startswith('O'):

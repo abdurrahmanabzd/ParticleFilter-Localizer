@@ -151,6 +151,8 @@ def resample(particles):
 
     return resampled_particles
 
+#endregion
+
 #Drawing the map of the environment
 map_file = 'map2023.dat'
 grid_map = process_map(map_file) #Grid-Map array

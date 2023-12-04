@@ -44,7 +44,7 @@ def motion_model(particles, delta_rot1, delta_trans, delta_rot2):
     - delta_rot1: array of delta rotation1 values for each particle
     - delta_trans: array of delta translation values for each particle
     - delta_rot2: array of delta rotation2 values for each particle
-
+    
     Returns:
     - Updated particles array after odometry motion update.
     """
@@ -141,10 +141,10 @@ def resample(particles):
     norm_weights = particles[:,3] / np.sum(particles[:,3])
 
     # Random Sampling (uniform dist.) 
-    r = np.random.choice(np.arange(num_particles), size=num_particles, p=norm_weights)
+    rs = np.random.choice(np.arange(num_particles), size=num_particles, p=norm_weights)
 
     # Creating a new set of particles
-    resampled_particles = particles[r].copy()
+    resampled_particles = particles[rs].copy()
 
     # Resetting weights after resampling
     resampled_particles[:,3] = 1.0 / num_particles

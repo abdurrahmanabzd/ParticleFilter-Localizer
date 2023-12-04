@@ -141,10 +141,10 @@ def resample(particles):
     norm_weights = particles[:,3] / np.sum(particles[:,3])
 
     # Random Sampling (uniform dist.) 
-    rs = np.random.choice(np.arange(num_particles), size=num_particles, p=norm_weights)
+    r_s = np.random.choice(np.arange(num_particles), size=num_particles, p=norm_weights)
 
     # Creating a new set of particles
-    resampled_particles = particles[rs].copy()
+    resampled_particles = particles[r_s].copy()
 
     # Resetting weights after resampling
     resampled_particles[:,3] = 1.0 / num_particles

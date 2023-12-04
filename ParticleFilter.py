@@ -130,24 +130,23 @@ def sensor_model(particles, lidar_data, map):
 def resample(particles):
     """
     Resample particles based on their weights.
-
+    
     Parameters:
     - particles: numpy array of shape (num_particles, 4) representing particles [x, y, theta, weight]
 
     Returns:
     - Resampled particles array.
     """
+    # Re-normalizing the widths 
+    norm_weights = particles[:,3] / np.sum(particles[:,3])
 
-    # Re-normalize the widths so that the total sum width = M:
-    normalized_weights = particles[:,3] / np.sum(particles[:,3])
+    # Random Sampling (uniform dist.) 
+    r = np.random.choice(np.arange(num_particles), size=num_particles, p=norm_weights)
 
-    # Randomly draw r from [0, 1] (uniform dist.) + Loop through particles from [1] upwards while the sum of weights thus far is less than r:
-    indices = np.random.choice(np.arange(num_particles), size=num_particles, p=normalized_weights)
+    # Creating a new set of particles
+    resampled_particles = particles[r].copy()
 
-    # Create a new set of particles based on the selected indices
-    resampled_particles = particles[indices].copy()
-
-    # Reset weights to uniform distribution after resampling
+    # Resetting weights after resampling
     resampled_particles[:,3] = 1.0 / num_particles
 
     return resampled_particles

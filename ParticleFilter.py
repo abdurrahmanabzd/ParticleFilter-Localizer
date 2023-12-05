@@ -1,5 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.animation as animation
+import os
+import imageio
+
+
 
 # Particle filter parameters
 num_particles = 1000
@@ -158,10 +163,16 @@ map_file = 'map2023.dat'
 grid_map = process_map(map_file) #Grid-Map array
 
 #region Main Loop
+
 # Read the odometry data from the file
 with open('Robotdata2023.log', 'r') as file:
     # Particle filter main loop
     particles = initial_particles.copy()
+
+    fig, ax = plt.subplots() # Initialize figure and axes for the animation
+    frames = [] # Create an empty list to store frames
+    
+    i=0
 
     # Read the file line by line
     for line in file:
@@ -173,9 +184,12 @@ with open('Robotdata2023.log', 'r') as file:
         timestamp = elements.pop()
 
         # Calculate delta_rot1, delta_trans, and delta_rot2
-        delta_trans = np.sqrt((x_robot - particles[:, 0])**2 + (y_robot - particles[:, 1])**2)
-        delta_rot1 = np.arctan2(y_robot - particles[:, 1], x_robot - particles[:, 0]) - particles[:, 2]
-        delta_rot2 = theta_robot - particles[:, 2]
+        delta_trans = np.sqrt((x_robot - particles[i, 0])**2 + (y_robot - particles[i, 1])**2)
+        delta_rot1 = np.arctan2(y_robot - particles[i, 1], x_robot - particles[i, 0]) - particles[i, 2]
+        delta_rot2 = theta_robot - particles[i, 2]
+
+        #if(delta_trans!=0 and delta_rot1!=0)
+        show_particles(grid_map, particles) # Show the map at the beginning of each loop
 
         # Check if the line starts with 'O' (indicating odometry data)
         if line.startswith('O'):
@@ -192,7 +206,30 @@ with open('Robotdata2023.log', 'r') as file:
             #Resampling
             particles = resample(particles)
     
-    show_particles(grid_map,particles)
+        # Show and update particle positions after each step
+        ax.clear()
+        ax.imshow(1 - grid_map, cmap='gray')
+        ax.scatter(particles[:, 0], particles[:, 1], s=1, c='b', marker='.')
+        #plt.pause(0.001)  # Pause for a short time to update the plot
+        
+        # Convert the plot to an image
+        fig.canvas.draw()
+        image = np.frombuffer(fig.canvas.tostring_rgb(), dtype='uint8')
+        image = image.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+ 
+        # Add the current frame to the list
+        frames.append(image)
+        #frames.append(ax.imshow(1 - grid_map, cmap='gray')) # Save the current frame
+        i+=1
+
+    # ani = animation.ArtistAnimation(fig, frames, interval=50, blit=True) # Create a video from saved frames
+    # ani.save('particle_filter_animation.mp4', writer='ffmpeg') # Save the animation as an .mp4 file
+    
+     # Save frames as a video using imageio
+    imageio.mimsave('particle_filter_animation.mp4', frames, fps=10)  # Adjust fps as needed
+
+
+    plt.show()  # Display the final plot
 
 #endregion
 

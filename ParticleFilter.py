@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-import os
+import math
 import imageio
 
 
@@ -202,7 +202,11 @@ with open('Robotdata2023.log', 'r') as file:
         elements = line.split()
 
         # Extract relevant odometry data and timestamp
-        x_robot, y_robot, theta_robot = map(float, elements[1:4])
+        x_robot_cm, y_robot_cm, theta_robot = map(float, elements[1:4])
+        # Convert cm to grid numbers
+        x_robot = math.floor(x_robot_cm / 4)
+        y_robot = math.floor(y_robot_cm / 4)
+
         timestamp = elements.pop()
 
         # Calculate delta_rot1, delta_trans, and delta_rot2
@@ -223,7 +227,9 @@ with open('Robotdata2023.log', 'r') as file:
             #Motion model:
             particles = motion_model(particles, delta_rot1, delta_trans, delta_rot2)
             #Sensor model:
-            sensor_data = [float(element) for element in elements[7:187]]
+            sensor_data_cm = [float(element) for element in elements[7:187]]
+            sensor_data = [min(math.floor(sensor / 4), 8000 // 4) for sensor in sensor_data_cm]  # Convert to grid numbers
+    
             particles = sensor_model(particles,sensor_data,grid_map)
             #Resampling
             particles = resample(particles)
